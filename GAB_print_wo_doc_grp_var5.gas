@@ -1,0 +1,487 @@
+Program.Sub.ScreenSU.Start
+gui.F_PrintType..create
+gui.F_PrintType..caption("Print Docs")
+gui.F_PrintType..size(1920,1830)
+gui.F_PrintType..position(0,0)
+gui.F_PrintType..event(unload,f_printtype_unload)
+gui.F_PrintType..alwaysontop(False)
+gui.F_PrintType..fontname("Arial")
+gui.F_PrintType..fontsize(8)
+gui.F_PrintType..forecolor(0)
+gui.F_PrintType..fontstyle(,,,,)
+gui.F_PrintType..BackColor(-2147483633)
+gui.F_PrintType..controlbox(True)
+gui.F_PrintType..maxbutton(False)
+gui.F_PrintType..minbutton(False)
+gui.F_PrintType..mousepointer(0)
+gui.F_PrintType..moveable(True)
+gui.F_PrintType..sizeable(False)
+gui.F_PrintType..ShowInTaskBar(True)
+gui.F_PrintType..titlebar(True)
+gui.F_PrintType.chkRouter.create(checkbox)
+gui.F_PrintType.chkRouter.caption("Router Docs")
+gui.F_PrintType.chkRouter.visible(True)
+gui.F_PrintType.chkRouter.size(1935,255)
+gui.F_PrintType.chkRouter.zorder(0)
+gui.F_PrintType.chkRouter.position(200,200)
+gui.F_PrintType.chkRouter.enabled(True)
+gui.F_PrintType.chkRouter.alignment(0)
+gui.F_PrintType.chkRouter.fontname("Arial")
+gui.F_PrintType.chkRouter.fontsize(8)
+gui.F_PrintType.chkPart.create(checkbox)
+gui.F_PrintType.chkPart.caption("Part Docs")
+gui.F_PrintType.chkPart.visible(True)
+gui.F_PrintType.chkPart.size(1935,255)
+gui.F_PrintType.chkPart.zorder(0)
+gui.F_PrintType.chkPart.position(200,500)
+gui.F_PrintType.chkPart.enabled(True)
+gui.F_PrintType.chkPart.alignment(0)
+gui.F_PrintType.chkPart.fontname("Arial")
+gui.F_PrintType.chkPart.fontsize(8)
+gui.F_PrintType.cmdOk.create(button)
+gui.F_PrintType.cmdOk.caption("Ok")
+gui.F_PrintType.cmdOk.visible(True)
+gui.F_PrintType.cmdOk.size(855,375)
+gui.F_PrintType.cmdOk.zorder(0)
+gui.F_PrintType.cmdOk.position(200,800)
+gui.F_PrintType.cmdOk.enabled(True)
+gui.F_PrintType.cmdOk.fontname("Arial")
+gui.F_PrintType.cmdOk.fontsize(8)
+gui.F_PrintType.cmdOk.event(click,cmdok_click)
+
+
+gui.F_Selections..create
+gui.F_Selections..caption("Choose Docs to Print")
+gui.F_Selections..size(15750,5445)
+gui.F_Selections..position(0,0)
+gui.F_Selections..event(unload,f_selections_unload)
+gui.F_Selections..alwaysontop(False)
+gui.F_Selections..fontname("Arial")
+gui.F_Selections..fontsize(8)
+gui.F_Selections..forecolor(0)
+gui.F_Selections..fontstyle(,,,,)
+gui.F_Selections..BackColor(-2147483633)
+gui.F_Selections..controlbox(True)
+gui.F_Selections..maxbutton(False)
+gui.F_Selections..minbutton(False)
+gui.F_Selections..mousepointer(0)
+gui.F_Selections..moveable(True)
+gui.F_Selections..sizeable(False)
+gui.F_Selections..ShowInTaskBar(True)
+gui.F_Selections..titlebar(True)
+gui.F_Selections.gsfgSelect.create(gsflexgrid)
+gui.F_Selections.gsfgSelect.FixedRows(0)
+gui.F_Selections.gsfgSelect.FixedCols(0)
+gui.F_Selections.gsfgSelect.visible(True)
+gui.F_Selections.gsfgSelect.size(15350,4300)
+gui.F_Selections.gsfgSelect.zorder(0)
+gui.F_Selections.gsfgSelect.position(100,100)
+gui.F_Selections.gsfgSelect.enabled(True)
+gui.F_Selections.cmdPrint.create(button)
+gui.F_Selections.cmdPrint.caption("Print")
+gui.F_Selections.cmdPrint.visible(True)
+gui.F_Selections.cmdPrint.size(855,375)
+gui.F_Selections.cmdPrint.zorder(0)
+gui.F_Selections.cmdPrint.position(100,4500)
+gui.F_Selections.cmdPrint.enabled(True)
+gui.F_Selections.cmdPrint.fontname("Arial")
+gui.F_Selections.cmdPrint.fontsize(8)
+gui.F_Selections.cmdPrint.event(click,Print_Docs)
+
+
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+
+Variable.Global.sJobs.Declare(String)
+Variable.Global.sPJobs.Declare(String)
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+'ARC project 499 mod.  Load 499 then load this version over the top
+F.Intrinsic.Control.If(V.Passed.009001,<>,"001811")
+	F.Intrinsic.control.End
+
+F.Intrinsic.Control.EndIf
+
+
+F.ODBC.Connection!con.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass)
+Gui.F_PrintType.chkPart.Value(1)
+Gui.F_PrintType.chkRouter.Value(1)
+'F.Intrinsic.Debug.InvokeDebugger
+Gui.F_PrintType..Show
+
+Program.Sub.Main.End
+
+Program.Sub.Get_WOs_To_Print.Start
+V.Local.sQuery.Declare(String)
+V.Local.sTemp.Declare(String)
+V.Local.sJobs.Declare(String)
+V.Global.sJobs.Redim(-1,-1)
+V.Local.iUB.Declare(Long,-1)
+
+F.Intrinsic.String.Concat("select DISTINCT JOB,SUFFIX,ROUTER,WO_ROUTER_PRNTED, PART_NO,PART_LOC from BI_BAR_HEAD where terminal = '",V.Caller.Terminal,"' AND RPTID='001811' ORDER BY JOB, SUFFIX",V.Local.sQuery)
+'V.Local.sQuery.Set("select DISTINCT JOB,SUFFIX,ROUTER,WO_ROUTER_PRNTED, PART_NO,PART_LOC from BI_BAR_HEAD where RPTID='001811' ORDER BY JOB, SUFFIX")
+F.ODBC.Connection!con.OpenRecordsetRO("rstWO",V.Local.sQuery)
+F.Intrinsic.Control.DoUntil(V.ODBC.con!rstWO.EOF,=,True)
+	F.Intrinsic.Math.Add(V.Local.iUB,1,V.Local.iUB)
+	F.Intrinsic.Control.If(V.Local.iUB,=,0)
+		V.Global.sJobs.Redim(0,0)
+	F.Intrinsic.Control.Else
+		V.Global.sJobs.RedimPreserve(0,V.Local.iUB)
+	F.Intrinsic.Control.EndIf
+
+	F.Intrinsic.String.Concat(V.ODBC.con!rstWO.FieldValTrim!JOB,"*!*",V.ODBC.con!rstWO.FieldValTrim!SUFFIX,"*!*",V.ODBC.con!rstWO.FieldValTrim!ROUTER,"*!*",V.ODBC.con!rstWO.FieldValTrim!WO_ROUTER_PRNTED,"*!*",V.ODBC.con!rstWO.FieldValTrim!PART_No,"*!*",V.ODBC.con!rstWO.FieldValTrim!Part_Loc,V.Local.sTemp)
+	V.Global.sJobs(v.Local.iUB).Set(V.Local.sTemp)
+
+	F.ODBC.con!rstWO.MoveNext
+F.Intrinsic.Control.Loop
+F.ODBC.con!rstWO.Close
+
+F.Intrinsic.String.Join(V.Global.sJobs,"$*$",V.Global.sJobs)
+F.Intrinsic.Variable.AddRV("sJobs",V.Global.sJobs)
+
+
+Program.Sub.Get_WOs_To_Print.End
+
+Program.Sub.Loop_WOs.Start
+F.Intrinsic.Control.SetErrorHandler("Loop_WOs_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+V.Local.sJobs.Declare(String)
+V.Local.sJob.Declare(String)
+V.Local.sQuery.Declare(String)
+V.Local.iJ.Declare(Long)
+V.Local.sGroupIDs.Declare(String)
+V.Local.iLinkID.Declare(String)
+V.Local.iG.Declare(Long)
+V.Local.sTemp.Declare(String)
+V.Local.sParams.Declare(String)
+V.Local.sValues.Declare(String)
+V.Local.sPrinter.Declare(String)
+V.Local.iPos.Declare(Long)
+V.Local.sDefault.Declare(String)
+V.Local.bWait.Declare(Boolean)
+V.Local.sGSFG.Declare(String)
+V.Local.sRow.Declare(String)
+V.Local.sBase.Declare(String)
+
+F.Intrinsic.Control.CallSub(Get_wos_to_print)
+F.Intrinsic.Control.If(V.Args.sJobs.Trim,=,"")
+	F.Intrinsic.Control.ExitSub
+F.Intrinsic.Control.EndIf
+F.Intrinsic.String.Split(V.Args.sJobs,"$*$",V.Local.sJobs)
+
+F.Intrinsic.Control.CallSub(Get_groups)
+F.Intrinsic.Control.If(V.Args.sGroupIDs.Trim,=,"")
+	F.Intrinsic.Control.ExitSub
+F.Intrinsic.Control.EndIf
+F.Intrinsic.String.Split(V.Args.sGroupIDs,"*!*",V.Local.sGroupIDs)
+
+'F.Intrinsic.Debug.InvokeDebugger
+F.Intrinsic.Control.For(V.Local.iJ,0,V.Local.sJobs.UBound,1)
+	F.Intrinsic.String.Split(V.Local.sJobs(v.Local.iJ),"*!*",V.Local.sJob)
+	F.Intrinsic.Control.If(V.Local.sJob.UBound,=,5)
+		'Print WO
+		F.Intrinsic.String.Concat("1*!*",V.Local.sJobs(v.Local.iJ),"*!*",V.Local.sBase)
+		F.Intrinsic.String.Replace(V.Local.sBase,"*!**!*","*!* *!*",V.Local.sBase)
+		'Print Links
+		'__________________________________________
+		
+		F.Intrinsic.Control.If(V.Screen.F_PrintType!chkRouter.Value,=,1)
+			F.Global.DocumentControl.CreateReference(V.Local.sJob(2),35,V.Local.iLinkID)
+			F.Intrinsic.Control.If(V.Local.iLinkID,>,0)
+				F.Intrinsic.Control.For(V.Local.iG,0,V.Local.sGroupIDs.UBound,1)
+					F.Intrinsic.Control.CallSub(Getlinkinfo,"LinkID",V.Local.iLinkID,"GroupID",V.Local.sGroupIDs(v.Local.iG),"sBase",V.Local.sBase)
+					F.Intrinsic.Control.If(V.Args.sText,<>,"")
+						F.Intrinsic.Control.If(V.Local.sGSFG,=,"")
+							V.Local.sGSFG.Set(V.Args.sText)
+						F.Intrinsic.Control.Else
+							F.Intrinsic.String.Concat(V.Local.sGSFG,"!*!",V.Args.sText,V.Local.sGSFG)
+						F.Intrinsic.Control.EndIf
+					F.Intrinsic.Control.EndIf
+				F.Intrinsic.Control.Next(V.Local.iG)
+			F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.EndIf
+		
+		F.Intrinsic.Control.If(V.Screen.F_PrintType!chkPart.Value,=,1)
+			F.Global.DocumentControl.CreateReference(V.Local.sJob(4),30,V.Local.iLinkID)
+			F.Intrinsic.Control.If(V.Local.iLinkID,>,0)
+				F.Intrinsic.Control.For(V.Local.iG,0,V.Local.sGroupIDs.UBound,1)
+					F.Intrinsic.Control.CallSub(Getlinkinfo,"LinkID",V.Local.iLinkID,"GroupID",V.Local.sGroupIDs(v.Local.iG),"sBase",V.Local.sBase)
+					F.Intrinsic.Control.If(V.Args.sText,<>,"")
+						F.Intrinsic.Control.If(V.Local.sGSFG,=,"")
+							V.Local.sGSFG.Set(V.Args.sText)
+						F.Intrinsic.Control.Else
+							F.Intrinsic.String.Concat(V.Local.sGSFG,"!*!",V.Args.sText,V.Local.sGSFG)
+						F.Intrinsic.Control.EndIf
+					F.Intrinsic.Control.EndIf
+				F.Intrinsic.Control.Next(V.Local.iG)
+			F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.Next(V.Local.iJ)
+'F.Intrinsic.Debug.Stop
+Gui.F_Selections.gsfgSelect.LoadFromString(V.Local.sGSFG,1)
+Gui.F_Selections.gsfgSelect.FixedRows(1)
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Loop_WOs_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: ATG_PRINT_WO_DOC_GRP_VAR2.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+Program.Sub.Loop_WOs.End
+
+Program.Sub.Get_Groups.Start
+V.Local.sQuery.Declare(String)
+V.Local.sGroupIDs.Declare(String)
+V.Local.sGroupIDs.Redim(-1,-1)
+V.Local.iUB.Declare(Long,-1)
+
+F.ODBC.Connection!con.OpenRecordsetRO("rstGrpID","SELECT GRP_ID FROM ATG_PRINT_DOC_GRP WHERE TYPE = 1 and PRINT_FLAG = 1")
+F.Intrinsic.Control.DoUntil(V.ODBC.con!rstGrpID.EOF,=,True)
+	F.Intrinsic.Math.Add(V.Local.iUB,1,V.Local.iUB)
+	F.Intrinsic.Control.If(V.Local.iUB,=,0)
+		V.Local.sGroupIDs.Redim(0,0)
+	F.Intrinsic.Control.Else
+		V.Local.sGroupIDs.RedimPreserve(0,V.Local.iUB)
+	F.Intrinsic.Control.EndIf
+
+	V.Local.sGroupIDs(v.Local.iUB).Set(V.ODBC.con!rstGrpID.FieldValTrim!Grp_ID)
+
+	F.ODBC.con!rstGrpID.MoveNext
+F.Intrinsic.Control.Loop
+F.ODBC.con!rstGrpID.Close
+
+F.Intrinsic.String.Join(V.Local.sGroupIDs,"*!*",V.Local.sGroupIDs)
+F.Intrinsic.Variable.AddRV("sGroupIDs",V.Local.sGroupIDs)
+
+
+Program.Sub.Get_Groups.End
+
+program.sub.f_printtype_unload.start
+F.ODBC.Connection!con.Close
+F.Intrinsic.Control.End
+
+program.sub.f_printtype_unload.End
+
+program.sub.cmdok_click.start
+V.Local.iC.Declare(Long)
+Gui.F_PrintType..Visible(False)
+F.Intrinsic.UI.InvokeWaitDialog("Loading...")
+Gui.F_Selections.gsfgSelect.Rows(1)
+Gui.F_Selections.gsfgSelect.Rows(2)
+Gui.F_Selections.gsfgSelect.Cols(9)
+Gui.F_Selections.gsfgSelect.ColWidth(0,500)
+Gui.F_Selections.gsfgSelect.TextMatrix(1,0,"Job")
+Gui.F_Selections.gsfgSelect.ColWidth(1,1000)
+Gui.F_Selections.gsfgSelect.TextMatrix(2,0,"Suffix")
+Gui.F_Selections.gsfgSelect.ColWidth(2,600)
+Gui.F_Selections.gsfgSelect.TextMatrix(3,0,"Router")
+Gui.F_Selections.gsfgSelect.ColWidth(3,2000)
+Gui.F_Selections.gsfgSelect.TextMatrix(4,0,"Router Printed")
+Gui.F_Selections.gsfgSelect.ColWidth(4,0)
+Gui.F_Selections.gsfgSelect.TextMatrix(5,0,"Part")
+Gui.F_Selections.gsfgSelect.ColWidth(5,2000)
+Gui.F_Selections.gsfgSelect.TextMatrix(6,0,"Location")
+Gui.F_Selections.gsfgSelect.ColWidth(6,800)
+Gui.F_Selections.gsfgSelect.TextMatrix(7,0,"Path")
+Gui.F_Selections.gsfgSelect.ColWidth(7,5000)
+Gui.F_Selections.gsfgSelect.TextMatrix(8,0,"Description")
+Gui.F_Selections.gsfgSelect.ColWidth(8,3000)
+
+Gui.F_Selections.gsfgSelect.BuildStyle(1,0,"Format","Alignment",4)
+Gui.F_Selections.gsfgSelect.BuildStyle(1,0,"Type","Checkbox",1)
+F.Intrinsic.Control.For(V.Local.iC,1,8,1)
+	Gui.F_Selections.gsfgSelect.BuildStyle(1,V.Local.iC,"Format","Alignment",2)
+	Gui.F_Selections.gsfgSelect.BuildStyle(1,V.Local.iC,"Type","Locked",True)
+F.Intrinsic.Control.Next(V.Local.iC)
+Gui.F_Selections.gsfgSelect.ApplyStyle(1,1)
+Gui.F_Selections.gsfgSelect.FixedRows(1)
+
+F.Intrinsic.Control.CallSub(Loop_wos)
+F.Intrinsic.UI.CloseWaitDialog
+Gui.F_Selections..Show
+
+program.sub.cmdok_click.End
+
+program.sub.f_selections_unload.start
+F.ODBC.Connection!con.Close
+F.Intrinsic.Control.End
+
+program.sub.f_selections_unload.End
+
+Program.Sub.Print_Docs.Start
+F.Intrinsic.Control.SetErrorHandler("Print_Docs_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+V.Local.sJobs.Declare(String)
+V.Local.sJob.Declare(String)
+V.Local.sQuery.Declare(String)
+V.Local.iJ.Declare(Long)
+V.Local.sGroupIDs.Declare(String)
+V.Local.iLinkID.Declare(String)
+V.Local.iG.Declare(Long)
+V.Local.sTemp.Declare(String)
+V.Local.sParams.Declare(String)
+V.Local.sValues.Declare(String)
+V.Local.sPrinter.Declare(String)
+V.Local.iPos.Declare(Long)
+V.Local.sDefault.Declare(String)
+V.Local.bWait.Declare(Boolean)
+V.Local.iRows.Declare(Long)
+V.Local.sRow.Declare(String)
+V.Local.sLastJob.Declare(String)
+V.Local.sCurrJob.Declare(String)
+V.Local.bExists.Declare(Boolean)
+V.Local.sDefault.Set(V.Printer.DefaultPrinter)
+
+Gui.F_Selections..Visible(False)
+F.Intrinsic.Printer.SelectPrinterDialog
+V.Local.sPrinter.Set(V.Printer.DeviceName)
+F.Intrinsic.Printer.SetDefaultPrinter(V.Local.sPrinter)
+
+'F.Intrinsic.Debug.InvokeDebugger
+'F.Intrinsic.Debug.Stop
+F.Intrinsic.Math.Sub(V.Screen.F_Selections!gsfgSelect.Rows,1,V.Local.iRows)
+F.Intrinsic.Control.For(V.Local.iJ,1,V.Local.iRows,1)
+	Gui.F_Selections.gsfgSelect.ReadRow(V.Local.iJ,V.Local.sRow)
+	F.Intrinsic.String.Split(V.Local.sRow,"*!*",V.Local.sRow)
+	F.Intrinsic.Control.If(V.Local.sRow(0),=,"1")
+		F.Intrinsic.String.Concat(V.Local.sRow(1),V.Local.sRow(2),V.Local.sCurrJob)
+		F.Intrinsic.String.Concat(V.Local.sRow(1),"*!*",V.Local.sRow(2),"$!$",V.Global.sPJobs)
+		F.Intrinsic.Control.If(V.Local.sCurrJob,<>,V.Local.sLastJob)
+			'Print WO
+			'__________________________________________
+			F.Intrinsic.String.Concat(V.Local.sRow(1),"!*!",V.Local.sRow(2),"!*!","1811",V.Local.sTemp)
+			F.Intrinsic.Debug.SetLA("Callwrapper: ",V.Local.sTemp)
+			F.Global.General.CallWrapperSyncBIO(900100,V.Local.sTemp)
+
+			F.Intrinsic.String.Concat("UPDATE BI_BAR_HEAD SET WO_ROUTER_PRNTED='",V.Local.sRow(4).Trim,"' WHERE JOB='",V.Local.sRow(1).Trim,"' AND SUFFIX='",V.Local.sRow(2).Trim,"'",V.Local.sQuery)
+			F.ODBC.Connection!con.Execute(V.Local.sQuery)
+
+			V.Local.sParams.Set("TERMINAL*!*MATLBAR*!*OUTBAR*!*PROGRAM*!*REPORTID*!*COMMENTS*!*")
+			F.Intrinsic.String.Concat(V.Caller.Terminal,"*!*Y*!*Y*!*",V.Caller.Caller,"*!*001811*!*0*!*",V.local.sValues)
+
+			F.Intrinsic.String.Split(V.Local.sParams,"*!*",V.Local.sParams)
+			F.Intrinsic.String.Split(V.Local.sValues,"*!*",V.Local.sValues)
+			
+			F.Intrinsic.Control.If(V.Local.bWait,=,True)
+				'Pause 3 seconds before next print
+				F.Intrinsic.UI.Sleep(3)
+			F.Intrinsic.Control.EndIf
+			F.Global.BI.PrintReport("001811",3,V.Local.sParams,V.Local.sValues,V.Local.sPrinter,True)
+			'__________________________________________
+		F.Intrinsic.Control.EndIf
+		V.Local.sLastJob.Set(V.Local.sCurrJob)
+		'Print Links
+		F.Intrinsic.File.Exists(V.Local.sRow(7),V.Local.bExists)
+		F.Intrinsic.Control.If(V.Local.bExists,=,True)
+			F.Intrinsic.task.ShellExec(V.Caller.Handle,"PRINT",V.local.sRow(7),"","",0)
+		F.Intrinsic.Control.EndIf
+		F.Intrinsic.UI.Sleep(1)
+		V.Local.bWait.Set(True)
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.Next(V.Local.iJ)
+
+F.Intrinsic.Debug.Stop
+
+'compare the printed list to the total jobs, want to print even if there are no links
+F.Intrinsic.String.Split(V.Global.sJobs,"$*$",V.Local.sJob)
+F.Intrinsic.Control.For(V.Local.iJ,0,V.Local.sJob.UBound,1)
+	F.Intrinsic.String.Split(V.Local.sJob(v.Local.iJ),"*!*",V.Local.sRow)
+	F.Intrinsic.String.Concat(V.Local.sRow(0),"*!*",V.Local.sRow(1),V.Local.sTemp)
+	F.Intrinsic.String.Instr(V.Global.sPJobs,V.Local.sTemp,1,V.Local.iG)
+	F.Intrinsic.Control.If(V.Local.iG,=,0)
+		'Print WO
+		'__________________________________________
+		F.Intrinsic.String.Concat(V.Local.sRow(0),"!*!",V.Local.sRow(1),"!*!","1811",V.Local.sTemp)
+		F.Intrinsic.Debug.SetLA("Callwrapper: ",V.Local.sTemp)
+		F.Global.General.CallWrapperSyncBIO(900100,V.Local.sTemp)
+
+		F.Intrinsic.String.Concat("UPDATE BI_BAR_HEAD SET WO_ROUTER_PRNTED='Y' WHERE JOB='",V.Local.sRow(0).Trim,"' AND SUFFIX='",V.Local.sRow(1).Trim,"'",V.Local.sQuery)
+		F.ODBC.Connection!con.Execute(V.Local.sQuery)
+
+		'V.Local.sParams.Set("TERMINAL*!*MATLBAR*!*OUTBAR*!*PROGRAM*!*REPORTID*!*FGBAR")
+		'F.Intrinsic.String.Concat(V.Caller.Terminal,"*!*Y*!*Y*!*",V.Caller.Caller,"*!*001811*!*",V.local.sValues)
+		V.Local.sParams.Set("TERMINAL*!*MATLBAR*!*OUTBAR*!*PROGRAM*!*REPORTID*!*COMMENTS*!*")
+		F.Intrinsic.String.Concat(V.Caller.Terminal,"*!*Y*!*Y*!*",V.Caller.Caller,"*!*001811*!*0*!*",V.local.sValues)
+
+		F.Intrinsic.String.Split(V.Local.sParams,"*!*",V.Local.sParams)
+		F.Intrinsic.String.Split(V.Local.sValues,"*!*",V.Local.sValues)
+		
+		F.Intrinsic.Control.If(V.Local.bWait,=,True)
+			'Pause 3 seconds before next print
+			F.Intrinsic.UI.Sleep(3)
+		F.Intrinsic.Control.EndIf
+		F.Global.BI.PrintReport("001811",3,V.Local.sParams,V.Local.sValues,V.Local.sPrinter,True)
+		'__________________________________________
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.Next(V.Local.iJ)
+
+F.Intrinsic.UI.Sleep(5)
+F.Intrinsic.Printer.SetDefaultPrinter(V.Local.sDefault)
+V.Passed.CANCEL.Set(1)
+F.ODBC.Connection!con.Close
+F.Intrinsic.Control.End
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Print_Docs_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: ATG_PRINT_WO_DOC_GRP_VAR6.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+F.ODBC.Connection!con.Close
+F.Intrinsic.Control.End
+
+Program.Sub.Print_Docs.End
+
+Program.Sub.GetLinkInfo.Start
+V.Local.sQuery.Declare(String)
+V.Local.sText.Declare(String)
+V.Local.stemp.Declare(String)
+
+F.Intrinsic.String.Concat("SELECT * FROM ATG_DOC_ASSOC WHERE LINK_ID = ",V.args.LinkID," AND GRP_ID = ",V.args.GroupID,V.Local.sQuery)
+F.ODBC.Connection!con.OpenRecordsetRO("rstDocID",V.Local.sQuery)
+
+F.Intrinsic.Control.DoUntil(V.ODBC.con!rstDocID.EOF,=,True)
+	F.Intrinsic.String.Right(V.ODBC.con!rstDocID.FieldValTrim!PATH,1,V.Local.stemp)
+	F.Intrinsic.Control.If(V.Local.stemp,=,"\")
+		F.Intrinsic.String.Concat(V.ODBC.con!rstDocID.FieldValTrim!PATH,V.ODBC.con!rstDocID.FieldValTrim!FILE,V.Local.stemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.String.Concat(V.ODBC.con!rstDocID.FieldValTrim!PATH,"\",V.ODBC.con!rstDocID.FieldValTrim!FILE,V.Local.stemp)
+	F.Intrinsic.Control.endif
+	
+	F.Intrinsic.Control.If(V.ODBC.con!rstDocID.FieldValTrim!Description,=,"")
+		F.Intrinsic.String.Concat(V.Local.stemp,"*!* ",V.Local.stemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.String.Concat(V.Local.stemp,"*!*",V.ODBC.con!rstDocID.FieldValTrim!Description,V.Local.stemp)
+	F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.If(V.Local.sText,=,"")
+		F.Intrinsic.String.Concat(V.Args.sBase,V.Local.stemp,V.Local.sText)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.String.Concat(V.Local.sText,"!*!",V.Args.sBase,V.Local.stemp,V.Local.sText)
+	F.Intrinsic.Control.EndIf
+	F.ODBC.con!rstDocID.MoveNext
+F.Intrinsic.control.loop
+F.ODBC.con!rstDocID.Close
+
+F.Intrinsic.Variable.AddRV("sText",V.Local.sText)
+
+Program.Sub.GetLinkInfo.End
+
+Program.Sub.Comments.Start
+${$0$}$ATG_PRINT_WO_DOC_GRP_VAR4$}$SMC$}$04/15/12
+${$3$}$0$}$$}$-1$}$-1$}$$}$01/01/00$}$Quote 3493 for customer X-Act Technologies
+
+Changes will be made to ATG_PRINT_WO_DOC_GRP.gas that will allow the user to select printing either the documents linked to the parts on the router, the documents linked to the router itself, or both.
+
+This program will be linked to hook 16090 (BI_Print hook) and will fire the script if the passed ID 009001 = 001811 indicating work orders are to be printed. At this time, a screen will be displayed allowing the user to select printing either the documents linked to the parts on the router, the documents linked to the router itself, or both. The program will gather a list of the all the documents meeting the selected criterea and display it for the customer in an editable flexgrid. From here, the user may use a checkbox on each row (defaulting to checked) to select/deselect which documents are to be printed. Once the user is finished, they will be able to click a print button which will print all documents in the grid which were checked to be printed.
+Program.Sub.Comments.End
+
